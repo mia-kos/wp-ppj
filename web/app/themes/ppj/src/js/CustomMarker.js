@@ -8,7 +8,7 @@ function CustomMarker(latlng, map, args) {
 function styleMarker(div, args) {
 
     if (args.solid) {
-      
+
     }
 
     if (args.selected) {

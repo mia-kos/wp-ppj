@@ -1,12 +1,12 @@
 .job-summary
-  border-bottom: .1rem solid $color-light
+  //border-bottom: .1rem solid $color-light
   font-size: $font-size-small
   line-height: 1.2
-  padding: $common-spacing/2 0
+  //padding: $common-spacing/2 0
   position: relative
 
   &__distance
-    font-weight: $font-weight-bold
+    //font-weight: $font-weight-bold
 
     &-miles:after
       content: ' mi.'
@@ -21,10 +21,10 @@
     font-weight: $font-weight-bold
     position: absolute
     right: 0
-    top: $common-spacing/2
+    top: 0 //$common-spacing/2
 
   &__link
-    bottom: $common-spacing/2
+    bottom: 0 //$common-spacing/2
     position: absolute
     right: 0
     text-decoration: underline
@@ -32,3 +32,14 @@
 
   &__prison-name > a
     text-decoration: underline
+
+  &--selected
+    padding-left: $common-spacing
+
+    &:before
+      background-color: $color-secondary
+      display: div
+      height: 100%
+      width: .3rem
+      position: relative
+      left: - $common-spacing
