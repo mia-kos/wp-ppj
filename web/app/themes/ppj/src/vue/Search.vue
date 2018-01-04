@@ -46,45 +46,66 @@
                     </job-summary>
                   </li>
                 </ul>
+                <div class="search__pagination">
+                  <button class="search__pagination-direction"
+                          :class="{'search__pagination-direction--active': (backwardEnabled == true)}"
+                          @click.stop.prevent="showPreviousPage"
+                  > <
+                  </button>
+                  {{searchResults.listView.activePage}} of {{searchResults.jobs.length}}
+                  <button class="search__pagination-direction"
+                          :class="{'search__pagination-direction--active': (forwardEnabled == true)}"
+                          @click.stop.prevent="showNextPage"
+                  > >
+                  </button>
+
+                  <!--<button v-for="n in numberOfResultPages"-->
+                          <!--class="search__pagination-link"-->
+                          <!--:class="{'search__pagination-link&#45;&#45;active': (searchResults.listView.activePage == (n - 1))}"-->
+                          <!--@click.stop.prevent="showPage(n-1)"-->
+                  <!--&gt;{{ n }}-->
+                  <!--</button>-->
+                </div>
               </div>
+
             </div>
           </div>
-          <div class="search__list-view" v-show="searchResults.activeView == 1">
-            <ul class="search__list-view-list">
-              <li v-for="(job, index) in searchResults.visibleSearchResults"
-                  :key="index">
-                <job-summary :distance="job.distance"
-                             :distance-time="job.distanceTime"
-                             :position="job.title"
-                             :salary="job.salary"
-                             :prison-name="job.prison_name"
-                             :prison-city="job.organizationCity"
-                             :prison-page-link="job.url"
-                             :url="job.url">
-                </job-summary>
-              </li>
-            </ul>
-            <div class="search__pagination">
-              <button class="search__pagination-direction"
-                      :class="{'search__pagination-direction--active': (backwardEnabled == true)}"
-                      @click.stop.prevent="showPreviousPage"
-              > <
-              </button>
+          <!--<div class="search__list-view" v-show="searchResults.activeView == 1">-->
+            <!--<ul class="search__list-view-list">-->
+              <!--<li v-for="(job, index) in searchResults.visibleSearchResults"-->
+                  <!--:key="index">-->
+                <!--<job-summary :distance="job.distance"-->
+                             <!--:distance-time="job.distanceTime"-->
+                             <!--:position="job.title"-->
+                             <!--:salary="job.salary"-->
+                             <!--:prison-name="job.prison_name"-->
+                             <!--:prison-city="job.organizationCity"-->
+                             <!--:prison-page-link="job.url"-->
+                             <!--:url="job.url">-->
+                <!--</job-summary>-->
+              <!--</li>-->
+            <!--</ul>-->
+            <!--<div class="search__pagination">-->
+              <!--<button class="search__pagination-direction"-->
+                      <!--:class="{'search__pagination-direction&#45;&#45;active': (backwardEnabled == true)}"-->
+                      <!--@click.stop.prevent="showPreviousPage"-->
+              <!--&gt; <-->
+              <!--</button>-->
 
-              <button class="search__pagination-direction"
-                      :class="{'search__pagination-direction--active': (forwardEnabled == true)}"
-                      @click.stop.prevent="showNextPage"
-              > >
-              </button>
+              <!--<button class="search__pagination-direction"-->
+                      <!--:class="{'search__pagination-direction&#45;&#45;active': (forwardEnabled == true)}"-->
+                      <!--@click.stop.prevent="showNextPage"-->
+              <!--&gt; >-->
+              <!--</button>-->
 
-              <button v-for="n in numberOfResultPages"
-                      class="search__pagination-link"
-                      :class="{'search__pagination-link--active': (searchResults.listView.activePage == (n - 1))}"
-                      @click.stop.prevent="showPage(n-1)"
-              >{{ n }}
-              </button>
-            </div>
-          </div>
+              <!--<button v-for="n in numberOfResultPages"-->
+                      <!--class="search__pagination-link"-->
+                      <!--:class="{'search__pagination-link&#45;&#45;active': (searchResults.listView.activePage == (n - 1))}"-->
+                      <!--@click.stop.prevent="showPage(n-1)"-->
+              <!--&gt;{{ n }}-->
+              <!--</button>-->
+            <!--</div>-->
+          <!--</div>-->
 
         </div>
       </div>
@@ -107,6 +128,7 @@
     data() {
       return {
         deviceIsMobile: false,
+
         searchResults: {
           activeView: 0,
           display: true,//false,
@@ -122,12 +144,16 @@
           jobs: dummyJobs,
           orderBy: 'distance',
           jobLocationGroups: {},
+          orderedJobLocationGroups: [],
+          searchTerm: '',
           searchTermMarker: {},
           selectedJobLocationGroupId: '',
           visibleJobLocationGroup: null,
           visibleSearchResults: dummyJobs
         },
+
         mapSrc: '',
+
         mapOptions: {
           zoom: 7,
           center: new google.maps.LatLng(52.4832138, -1.5947146),
@@ -135,7 +161,9 @@
           streetViewControl: false,
           mapTypeControl: false,
         },
+
         titleText: 'Search for jobs',
+
         placeHolderText: 'Enter location'
       }
     },
@@ -205,19 +233,39 @@
         this.searchResults.selectedJobLocationGroupId = groupId;
       },
 
+      computeVisibleSearchResults(orderedJobLocationGroups, jobLocationGroupsPerPage, activePageNumber) {
+        const selectedJobLocationGroups = orderedJobLocationGroups.splice(jobLocationGroupsPerPage * activePageNumber, jobLocationGroupsPerPage);
+        const visibleSearchResults = [];
+        for (const i in selectedJobLocationGroups) {
+          for (const j in selectedJobLocationGroups[i]) {
+            visibleSearchResults.push(selectedJobLocationGroups[i][j]);
+          }
+        }
+        return visibleSearchResults;
+      },
+
       setVisibleSearchResults() {
 
-        if (window.innerWidth < 768) {
-          const
-            listView = this.searchResults.listView,
-            startIndex =
-              listView.activePage
-              * listView.resultsPerPage,
-            endIndex = startIndex + listView.resultsPerPage
-          ;
-          this.searchResults.visibleSearchResults = this.searchResults.jobs.slice(startIndex, endIndex);
+        if (this.isDeviceMobile()) {
+//          const
+//            listView = this.searchResults.listView,
+//            startIndex =
+//              listView.activePage
+//              * listView.resultsPerPage,
+//            endIndex = startIndex + listView.resultsPerPage
+//          ;
+//
+//          this.searchResults.visibleSearchResults = this.searchResults.jobs.slice(startIndex, endIndex);
+          this.searchResults.visibleSearchResults = this.computeVisibleSearchResults(
+            this.searchResults.orderedJobLocationGroups,
+            this.searchResults.listView.resultsPerPage,
+            this.searchResults.listView.activePage
+          )
+
         } else {
+
           this.searchResults.visibleSearchResults = this.searchResults.jobs;
+
         }
       },
 
@@ -273,6 +321,24 @@
         this.searchResults.jobs.sort(function (a, b) {
           return a.distance - b.distance;
         });
+
+        console.log('job location group distance');
+        this.searchResults.orderedJobLocationGroups = [];
+        for (const group in this.searchResults.jobLocationGroups) {
+          console.log('group', group);
+          const newDistance = this.calculateDistanceBetweenTwoLatLngPoints(
+            lat,
+            lng,
+            this.searchResults.jobLocationGroups[group][0].prison_location.lat,
+            this.searchResults.jobLocationGroups[group][0].prison_location.lng
+          );
+          this.searchResults.jobLocationGroups.distance = newDistance;
+          this.searchResults.orderedJobLocationGroups.push(this.searchResults.jobLocationGroups[group]);
+        }
+
+        this.searchResults.orderedJobLocationGroups.sort(function (a, b) {
+          return a[0].distance - b[0].distance;
+        });
       },
 
       createJobLocationGroups() {
@@ -301,6 +367,13 @@
         }
         this.searchResults.jobLocationGroups = jobLocationGroups;
         this.searchResults.selectedJobLocationGroupId = closestJobLocationGroupId;
+
+        // initialize orderedJobLocationGroups array
+        this.searchResults.orderedJobLocationGroups = [];
+        for (const id in this.searchResults.jobLocationGroups) {
+          this.searchResults.orderedJobLocationGroups.push(this.searchResults.jobLocationGroups[id]);
+        }
+
       },
 
       createMap() {
