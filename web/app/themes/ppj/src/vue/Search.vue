@@ -101,6 +101,8 @@
 
 <script>
   import axios from 'axios';
+  //import MarkerWithLabel from 'markerwithlabel';
+  import clusterer from 'js-marker-clusterer';
   import CustomMarker from '../js/CustomMarker';
   import dummyJobs from '../js/dummyJobs';
 
@@ -226,7 +228,7 @@
 
       focusOnJobLocationGroup(groupId) {
         this.updateSelectedJobLocationGroupId(groupId);
-        CustomMarker.changeSelectedMarkerByGroupId(groupId);
+        //CustomMarker.changeSelectedMarkerByGroupId(groupId);
         this.zoom();
       },
 
@@ -251,10 +253,12 @@
       },
 
       updateMapWithJobLocationGroupMarkers(jobLocationGroups) {
+        const markers = [];
         const markerArgs = [];
         for (let group in jobLocationGroups) {
           markerArgs.push({
             class: 'search__map-marker--job-location-group',
+            label: 'foo',
             solid: true,
             amount: jobLocationGroups[group].jobs.length,
             groupId: group,
@@ -267,12 +271,81 @@
           }
           const latLngArr = markerArgs[i].groupId.split(',');
           const latLng = new google.maps.LatLng(latLngArr[0], latLngArr[1]);
-          new CustomMarker(
-            latLng,
-            this.map,
-            markerArgs[i]
-          );
+//          new CustomMarker(
+//            latLng,
+//            this.map,
+//            markerArgs[i]
+//          );
+
+
+//          var pinColor = "8888FF";
+//          var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
+//            new google.maps.Size(21, 34),
+//            new google.maps.Point(0,0),
+//            new google.maps.Point(10, 34));
+//          var pinShadow = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_shadow",
+//            new google.maps.Size(40, 37),
+//            new google.maps.Point(0, 0),
+//            new google.maps.Point(12, 35));
+//          var marker = new google.maps.Marker({
+//            position: latLng,
+//            map: this.map,
+//            icon: pinImage,
+//            shadow: pinShadow
+//          });
+          const marker = new google.maps.Marker({
+            position: latLng,
+            icon: {
+              url: '/app/themes/ppj/dest/img/active_pin.png',
+              size: new google.maps.Size(32, 38),
+              scaledSize: new google.maps.Size(32, 38),
+              labelOrigin: new google.maps.Point(0, 50)
+            },
+            label: jobLocationGroups[markerArgs[i].groupId].prisonName
+          });
+
+          marker.addListener('click', markerArgs[i].clickCallback);
+          markers.push(marker);
         }
+
+        var clusterStyles = [
+          {
+            textColor: 'white',
+            url: '/app/themes/ppj/dest/img/inactive_pin.png',
+            height: 60,
+            width: 55
+          },
+//          {
+//            textColor: 'white',
+//            url: 'path/to/mediumclusterimage.png',
+//            height: 50,
+//            width: 50
+//          },
+//          {
+//            textColor: 'white',
+//            url: 'path/to/largeclusterimage.png',
+//            height: 50,
+//            width: 50
+//          }
+        ];
+
+        var mcOptions = {
+          averageCenter: true,
+          gridSize: 50,
+          maxZoom: 15,
+          styles: clusterStyles,
+        };
+
+        const markerCluster = new MarkerClusterer(
+          this.map,
+          markers,
+//          {
+////            styles : [{
+////              //textColor: 'red'
+////            }]
+//          }
+          mcOptions
+        );
       },
 
       updateJobsDistance(lat, lng) {
@@ -323,7 +396,11 @@
           const latLngStr = jobs[i].prison_location.lat + ',' + jobs[i].prison_location.lng;
 
           if (typeof jobLocationGroups[latLngStr] == 'undefined') {
-            jobLocationGroups[latLngStr] = {jobs: [jobs[i]]};
+            jobLocationGroups[latLngStr] = {
+              distance: 0,
+              prisonName: jobs[i].prison_name,
+              jobs: [jobs[i]]
+            };
           } else {
             jobLocationGroups[latLngStr].jobs.push(jobs[i]);
           }
