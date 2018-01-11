@@ -164,7 +164,7 @@
 
         titleText: this.title,
 
-        placeHolderText: 'Enter location'
+        placeHolderText: 'london'
       }
     },
 
